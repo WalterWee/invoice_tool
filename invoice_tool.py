@@ -145,7 +145,7 @@ class InvoiceToolApp:
             sheet_detail = wb["2-发票明细信息"]
 
             # 起始行
-            row_idx_basic = 6
+            row_idx_basic = 4
             row_idx_detail = 4
 
             # 4. 遍历每个分组进行填入
@@ -205,7 +205,7 @@ class InvoiceToolApp:
             
             wb.save(output_path)
             
-            CustomMessageBox(self.root, "成功", f"合并处理完成！\n共生成 {row_idx_basic - 6} 张发票数据。\n文件已保存至：\n{output_path}")
+            CustomMessageBox(self.root, "成功", f"合并处理完成！\n共生成 {row_idx_basic - 4} 张发票数据。\n文件已保存至：\n{output_path}")
 
         except Exception as e:
             import traceback

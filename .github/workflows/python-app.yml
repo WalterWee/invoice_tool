@@ -35,5 +35,5 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: invoice-tool-${{ matrix.os }}
+        name: invoice-tool-${{ matrix.os }}-${{ matrix.python-version }}
         path: dist/

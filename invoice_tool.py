@@ -5,11 +5,33 @@ import openpyxl
 import os
 import datetime
 
+class CustomMessageBox:
+    def __init__(self, parent, title, message):
+        self.dialog = tk.Toplevel(parent)
+        self.dialog.title(title)
+
+        frame = ttk.Frame(self.dialog, padding="20")
+        frame.pack(expand=True, fill="both")
+
+        label = ttk.Label(frame, text=message, wraplength=400, justify="left")
+        label.pack(pady=10)
+
+        button_frame = ttk.Frame(frame)
+        button_frame.pack(pady=10)
+
+        ok_button = ttk.Button(button_frame, text="OK", command=self.dialog.destroy)
+        ok_button.pack()
+
+        self.dialog.transient(parent)
+        self.dialog.grab_set()
+        parent.wait_window(self.dialog)
+
+
 class InvoiceToolApp:
     def __init__(self, root):
         self.root = root
         self.root.title("自动填写开票模板工具 (合并版)")
-        self.root.geometry("600x400")
+        self.root.geometry("800x450")
 
         # 变量存储路径
         self.source_path = tk.StringVar()
@@ -30,13 +52,14 @@ class InvoiceToolApp:
         # File selection frame
         file_frame = ttk.LabelFrame(main_frame, text="文件选择", padding="10")
         file_frame.grid(row=0, column=0, columnspan=3, sticky="ew", padx=5, pady=5)
+        file_frame.columnconfigure(1, weight=1)
 
         ttk.Label(file_frame, text="1. 选择源数据文件 (上研-满座儿.xlsx):").grid(row=0, column=0, columnspan=3, sticky="w", padx=5, pady=2)
-        ttk.Entry(file_frame, textvariable=self.source_path, width=60).grid(row=1, column=0, columnspan=2, padx=5, pady=2)
+        ttk.Entry(file_frame, textvariable=self.source_path, width=60).grid(row=1, column=0, columnspan=2, padx=5, pady=2, sticky="ew")
         ttk.Button(file_frame, text="浏览", command=self.select_source).grid(row=1, column=2, padx=5, pady=2)
 
         ttk.Label(file_frame, text="2. 选择开票模板文件 (导入开票模板.xlsx):").grid(row=2, column=0, columnspan=3, sticky="w", padx=5, pady=2)
-        ttk.Entry(file_frame, textvariable=self.template_path, width=60).grid(row=3, column=0, columnspan=2, padx=5, pady=2)
+        ttk.Entry(file_frame, textvariable=self.template_path, width=60).grid(row=3, column=0, columnspan=2, padx=5, pady=2, sticky="ew")
         ttk.Button(file_frame, text="浏览", command=self.select_template).grid(row=3, column=2, padx=5, pady=2)
 
         # Parameters frame
@@ -66,8 +89,6 @@ class InvoiceToolApp:
         self.run_button = ttk.Button(action_frame, text="开始合并并生成", command=self.process_data, style="TButton")
         self.run_button.pack()
 
-        self.progress_bar = ttk.Progressbar(action_frame, orient="horizontal", length=300, mode="determinate")
-        self.progress_bar.pack(pady=10)
 
 
     def select_source(self):
@@ -118,8 +139,6 @@ class InvoiceToolApp:
             # 2. 核心逻辑：分组 (按开票人、公司、税号分组)
             grouped = df.groupby(['开票人', '公司主体', '税号'])
             
-            self.progress_bar['maximum'] = len(grouped)
-
             # 3. 加载模板
             wb = openpyxl.load_workbook(template_file)
             sheet_basic = wb["1-发票基本信息"]
@@ -179,22 +198,18 @@ class InvoiceToolApp:
 
                 row_idx_detail += 1
                 
-                self.progress_bar['value'] = i + 1
-                self.root.update_idletasks()
-
             # 5. 保存
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             output_folder = os.path.dirname(source_file)
             output_path = os.path.join(output_folder, f"已合并整理_开票文件_{timestamp}.xlsx")
             
             wb.save(output_path)
-            self.progress_bar['value'] = 0
-            messagebox.showinfo("成功", f"合并处理完成！\n共生成 {row_idx_basic - 6} 张发票数据。\n文件已保存至：\n{output_path}")
+            
+            CustomMessageBox(self.root, "成功", f"合并处理完成！\n共生成 {row_idx_basic - 6} 张发票数据。\n文件已保存至：\n{output_path}")
 
         except Exception as e:
             import traceback
             error_msg = traceback.format_exc()
-            self.progress_bar['value'] = 0
             messagebox.showerror("错误", f"发生错误：{str(e)}\n\n{error_msg}")
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
-import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+import customtkinter as ctk
+from tkinter import filedialog, messagebox
 import pandas as pd
 import openpyxl
 import os
@@ -7,19 +7,19 @@ import datetime
 
 class CustomMessageBox:
     def __init__(self, parent, title, message):
-        self.dialog = tk.Toplevel(parent)
+        self.dialog = ctk.CTkToplevel(parent)
         self.dialog.title(title)
 
-        frame = ttk.Frame(self.dialog, padding="20")
-        frame.pack(expand=True, fill="both")
+        frame = ctk.CTkFrame(self.dialog)
+        frame.pack(expand=True, fill="both", padx=20, pady=20)
 
-        label = ttk.Label(frame, text=message, wraplength=400, justify="left")
+        label = ctk.CTkLabel(frame, text=message, wraplength=400)
         label.pack(pady=10)
 
-        button_frame = ttk.Frame(frame)
+        button_frame = ctk.CTkFrame(frame)
         button_frame.pack(pady=10)
 
-        ok_button = ttk.Button(button_frame, text="OK", command=self.dialog.destroy)
+        ok_button = ctk.CTkButton(button_frame, text="OK", command=self.dialog.destroy)
         ok_button.pack()
 
         self.dialog.transient(parent)
@@ -27,69 +27,62 @@ class CustomMessageBox:
         parent.wait_window(self.dialog)
 
 
-class InvoiceToolApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("自动填写开票模板工具 (合并版)")
-        self.root.geometry("800x450")
-
-        # 变量存储路径
-        self.source_path = tk.StringVar()
-        self.template_path = tk.StringVar()
-
-        # 界面布局
-        self.create_widgets()
-
-    def create_widgets(self):
-        # Set a theme
-        style = ttk.Style(self.root)
-        style.theme_use("clam")
+class InvoiceToolApp(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("自动填写开票模板工具 (合并版)")
+        self.geometry("800x450")
+        
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("blue")
 
         # Main frame
-        main_frame = ttk.Frame(self.root, padding="10")
-        main_frame.pack(fill=tk.BOTH, expand=True)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(2, weight=1)
 
         # File selection frame
-        file_frame = ttk.LabelFrame(main_frame, text="文件选择", padding="10")
-        file_frame.grid(row=0, column=0, columnspan=3, sticky="ew", padx=5, pady=5)
-        file_frame.columnconfigure(1, weight=1)
+        self.file_frame = ctk.CTkFrame(self)
+        self.file_frame.grid(row=0, column=0, padx=20, pady=10, sticky="ew")
+        self.file_frame.grid_columnconfigure(1, weight=1)
 
-        ttk.Label(file_frame, text="1. 选择源数据文件 (上研-满座儿.xlsx):").grid(row=0, column=0, columnspan=3, sticky="w", padx=5, pady=2)
-        ttk.Entry(file_frame, textvariable=self.source_path, width=60).grid(row=1, column=0, columnspan=2, padx=5, pady=2, sticky="ew")
-        ttk.Button(file_frame, text="浏览", command=self.select_source).grid(row=1, column=2, padx=5, pady=2)
+        self.source_path = ctk.StringVar()
+        self.template_path = ctk.StringVar()
 
-        ttk.Label(file_frame, text="2. 选择开票模板文件 (导入开票模板.xlsx):").grid(row=2, column=0, columnspan=3, sticky="w", padx=5, pady=2)
-        ttk.Entry(file_frame, textvariable=self.template_path, width=60).grid(row=3, column=0, columnspan=2, padx=5, pady=2, sticky="ew")
-        ttk.Button(file_frame, text="浏览", command=self.select_template).grid(row=3, column=2, padx=5, pady=2)
+        ctk.CTkLabel(self.file_frame, text="1. 选择源数据文件 (上研-满座儿.xlsx):").grid(row=0, column=0, columnspan=3, padx=10, pady=5, sticky="w")
+        ctk.CTkEntry(self.file_frame, textvariable=self.source_path).grid(row=1, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
+        ctk.CTkButton(self.file_frame, text="浏览", command=self.select_source).grid(row=1, column=2, padx=10, pady=5)
+
+        ctk.CTkLabel(self.file_frame, text="2. 选择开票模板文件 (导入开票模板.xlsx):").grid(row=2, column=0, columnspan=3, padx=10, pady=5, sticky="w")
+        ctk.CTkEntry(self.file_frame, textvariable=self.template_path).grid(row=3, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
+        ctk.CTkButton(self.file_frame, text="浏览", command=self.select_template).grid(row=3, column=2, padx=10, pady=5)
 
         # Parameters frame
-        params_frame = ttk.LabelFrame(main_frame, text="参数设置", padding="10")
-        params_frame.grid(row=1, column=0, columnspan=3, sticky="ew", padx=5, pady=5)
+        self.params_frame = ctk.CTkFrame(self)
+        self.params_frame.grid(row=1, column=0, padx=20, pady=10, sticky="ew")
+        self.params_frame.grid_columnconfigure((1, 3, 5), weight=1)
 
-        ttk.Label(params_frame, text="税收编码 (餐饮):").grid(row=0, column=0, sticky="w", padx=5, pady=5)
-        self.tax_code_entry = ttk.Entry(params_frame, width=25)
+        ctk.CTkLabel(self.params_frame, text="税收编码 (餐饮):").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.tax_code_entry = ctk.CTkEntry(self.params_frame)
         self.tax_code_entry.insert(0, "3070401000000000000") # 默认餐饮编码
-        self.tax_code_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.tax_code_entry.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
 
-        ttk.Label(params_frame, text="税率 (小数):").grid(row=0, column=2, sticky="w", padx=5, pady=5)
-        self.tax_rate_entry = ttk.Entry(params_frame, width=10)
+        ctk.CTkLabel(self.params_frame, text="税率 (小数):").grid(row=0, column=2, padx=10, pady=10, sticky="w")
+        self.tax_rate_entry = ctk.CTkEntry(self.params_frame)
         self.tax_rate_entry.insert(0, "0.06") # 默认6%
-        self.tax_rate_entry.grid(row=0, column=3, padx=5, pady=5)
+        self.tax_rate_entry.grid(row=0, column=3, padx=10, pady=10, sticky="ew")
         
-        ttk.Label(params_frame, text="项目名称:").grid(row=0, column=4, sticky="w", padx=5, pady=5)
-        self.item_name_entry = ttk.Entry(params_frame, width=15)
+        ctk.CTkLabel(self.params_frame, text="项目名称:").grid(row=0, column=4, padx=10, pady=10, sticky="w")
+        self.item_name_entry = ctk.CTkEntry(self.params_frame)
         self.item_name_entry.insert(0, "餐饮服务") # 默认合并后的名称
-        self.item_name_entry.grid(row=0, column=5, padx=5, pady=5)
+        self.item_name_entry.grid(row=0, column=5, padx=10, pady=10, sticky="ew")
 
         # Action frame
-        action_frame = ttk.Frame(main_frame, padding="10")
-        action_frame.grid(row=2, column=0, columnspan=3, pady=10)
+        self.action_frame = ctk.CTkFrame(self)
+        self.action_frame.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
+        self.action_frame.grid_columnconfigure(0, weight=1)
 
-        style.configure("TButton", font=("微软雅黑", 12, "bold"))
-        self.run_button = ttk.Button(action_frame, text="开始合并并生成", command=self.process_data, style="TButton")
-        self.run_button.pack()
-
-
+        self.run_button = ctk.CTkButton(self.action_frame, text="开始合并并生成", command=self.process_data)
+        self.run_button.grid(row=0, column=0, padx=20, pady=20)
 
     def select_source(self):
         # 优化文件过滤器
@@ -205,7 +198,7 @@ class InvoiceToolApp:
             
             wb.save(output_path)
             
-            CustomMessageBox(self.root, "成功", f"合并处理完成！\n共生成 {row_idx_basic - 4} 张发票数据。\n文件已保存至：\n{output_path}")
+            CustomMessageBox(self, "成功", f"合并处理完成！\n共生成 {row_idx_basic - 4} 张发票数据。\n文件已保存至：\n{output_path}")
 
         except Exception as e:
             import traceback
@@ -213,6 +206,5 @@ class InvoiceToolApp:
             messagebox.showerror("错误", f"发生错误：{str(e)}\n\n{error_msg}")
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = InvoiceToolApp(root)
-    root.mainloop()
+    app = InvoiceToolApp()
+    app.mainloop()

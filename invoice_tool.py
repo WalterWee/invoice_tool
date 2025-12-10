@@ -31,7 +31,7 @@ class InvoiceToolApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("自动填写开票模板工具 (合并版)")
-        self.geometry("800x450")
+        self.geometry("800x500")
         
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
@@ -47,14 +47,18 @@ class InvoiceToolApp(ctk.CTk):
 
         self.source_path = ctk.StringVar()
         self.template_path = ctk.StringVar()
+        self.source_sheet_name = ctk.StringVar()
 
         ctk.CTkLabel(self.file_frame, text="1. 选择源数据文件 (上研-满座儿.xlsx):").grid(row=0, column=0, columnspan=3, padx=10, pady=5, sticky="w")
         ctk.CTkEntry(self.file_frame, textvariable=self.source_path).grid(row=1, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
         ctk.CTkButton(self.file_frame, text="浏览", command=self.select_source).grid(row=1, column=2, padx=10, pady=5)
+        
+        ctk.CTkLabel(self.file_frame, text="源文件中的工作表名:").grid(row=2, column=0, padx=10, pady=5, sticky="w")
+        ctk.CTkEntry(self.file_frame, textvariable=self.source_sheet_name).grid(row=2, column=1, columnspan=2, padx=10, pady=5, sticky="ew")
 
-        ctk.CTkLabel(self.file_frame, text="2. 选择开票模板文件 (导入开票模板.xlsx):").grid(row=2, column=0, columnspan=3, padx=10, pady=5, sticky="w")
-        ctk.CTkEntry(self.file_frame, textvariable=self.template_path).grid(row=3, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
-        ctk.CTkButton(self.file_frame, text="浏览", command=self.select_template).grid(row=3, column=2, padx=10, pady=5)
+        ctk.CTkLabel(self.file_frame, text="2. 选择开票模板文件 (导入开票模板.xlsx):").grid(row=3, column=0, columnspan=3, padx=10, pady=5, sticky="w")
+        ctk.CTkEntry(self.file_frame, textvariable=self.template_path).grid(row=4, column=0, columnspan=2, padx=10, pady=5, sticky="ew")
+        ctk.CTkButton(self.file_frame, text="浏览", command=self.select_template).grid(row=4, column=2, padx=10, pady=5)
 
         # Parameters frame
         self.params_frame = ctk.CTkFrame(self)
@@ -105,6 +109,7 @@ class InvoiceToolApp(ctk.CTk):
     def process_data(self):
         source_file = self.source_path.get()
         template_file = self.template_path.get()
+        sheet_name = self.source_sheet_name.get()
         tax_code = self.tax_code_entry.get()
         tax_rate = self.tax_rate_entry.get()
         item_name = self.item_name_entry.get()
@@ -118,7 +123,7 @@ class InvoiceToolApp(ctk.CTk):
             if source_file.endswith('.csv'):
                 df = pd.read_csv(source_file)
             else:
-                df = pd.read_excel(source_file)
+                df = pd.read_excel(source_file, sheet_name=sheet_name if sheet_name else 0)
 
             # 数据预处理：确保字段为字符串，并处理空值
             df['金额'] = pd.to_numeric(df['金额'], errors='coerce').fillna(0)
